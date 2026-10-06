@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -22,7 +22,7 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   background: var(--bg);
   color: var(--text);
   font-size: 14px;
@@ -56,20 +56,10 @@ body.centered {
   box-shadow: var(--shadow);
 }
 
-/* ---- Login card accent strip ---- */
+/* ---- Login card ---- */
 .login-card {
   width: 100%;
   max-width: 360px;
-  overflow: hidden;
-  position: relative;
-}
-
-.login-card::before {
-  content: '';
-  display: block;
-  height: 4px;
-  background: linear-gradient(90deg, var(--primary) 60%, var(--secondary) 100%);
-  margin: -1.5rem -1.5rem 1.5rem;
 }
 
 .login-card h1 {
