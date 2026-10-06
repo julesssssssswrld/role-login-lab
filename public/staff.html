@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Staff Dashboard" />
+  <title>Staff Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div class="topbar-meta">
+        <h1>Dashboard</h1>
+        <span class="badge-role staff">Staff</span>
+      </div>
+      <button id="logoutBtn" class="btn danger">Sign out</button>
+    </header>
+
+    <div class="card">
+      <p class="welcome">Signed in as <strong id="staffName"></strong></p>
+      <p class="muted" id="staffEmail"></p>
+    </div>
+
+    <div class="card">
+      <h2>Staff Actions</h2>
+      <ul class="tool-list" style="margin-top:.5rem;">
+        <li>Review submitted records</li>
+        <li>Update content and announcements</li>
+        <li>Reply to user inquiries</li>
+      </ul>
+      <p class="notice">Staff cannot manage user accounts. Contact an admin for changes.</p>
+    </div>
+  </div>
+
+  <script>
+    const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
+    if (!currentUser || currentUser.role !== 'staff') {
+      window.location.href = '/login.html';
+    } else {
+      document.getElementById('staffName').textContent  = currentUser.name;
+      document.getElementById('staffEmail').textContent = currentUser.email;
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.removeItem('currentUser');
+      window.location.href = '/login.html';
+    });
+  </script>
+</body>
+</html>

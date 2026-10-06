@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sign in to access your role-based dashboard." />
+  <title>Sign In</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="centered">
+  <div class="card login-card">
+    <h1>Sign in</h1>
+    <p class="muted" style="margin-bottom:1.5rem;">Enter your credentials to continue.</p>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="you@lab.com" required />
+      </div>
+      <div class="field" style="margin-bottom:1.25rem;">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Password" required />
+      </div>
+      <button type="submit" id="submitBtn" class="btn primary">Continue</button>
+    </form>
+
+    <p id="msg" class="msg"></p>
+
+    <div class="hint">
+      <strong>No account?</strong> Create one via Postman:<br />
+      <code>POST /api/users</code> &mdash; <code>name</code>, <code>email</code>, <code>password</code>, <code>role</code><br />
+      Roles: <code>admin</code> &middot; <code>staff</code> &middot; <code>user</code>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const msg  = document.getElementById('msg');
+    const btn  = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.textContent = '';
+      msg.className = 'msg';
+
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!email.includes('@')) {
+        msg.textContent = 'Please enter a valid email address.';
+        msg.className = 'msg error';
+        return;
+      }
+      if (password.length < 6) {
+        msg.textContent = 'Password must be at least 6 characters.';
+        msg.className = 'msg error';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+
+      try {
+        const res  = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          msg.textContent = data.error || 'Login failed.';
+          msg.className = 'msg error';
+          return;
+        }
+
+        sessionStorage.setItem('currentUser', JSON.stringify(data.user));
+        window.location.href = data.redirectTo;
+      } catch {
+        msg.textContent = 'Cannot reach the server.';
+        msg.className = 'msg error';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Continue';
+      }
+    });
+  </script>
+</body>
+</html>

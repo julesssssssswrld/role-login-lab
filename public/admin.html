@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Admin Dashboard" />
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div class="topbar-meta">
+        <h1>Dashboard</h1>
+        <span class="badge-role admin">Admin</span>
+      </div>
+      <button id="logoutBtn" class="btn danger">Sign out</button>
+    </header>
+
+    <div class="card">
+      <p class="welcome">Signed in as <strong id="adminName"></strong></p>
+      <p class="muted" id="adminEmail"></p>
+    </div>
+
+    <div class="card">
+      <h2>Overview</h2>
+      <div class="stats-row">
+        <div class="stat"><div class="stat-value" id="totalUsers">–</div><div class="stat-label">Total</div></div>
+        <div class="stat"><div class="stat-value" id="totalAdmins">–</div><div class="stat-label">Admins</div></div>
+        <div class="stat"><div class="stat-value" id="totalStaff">–</div><div class="stat-label">Staff</div></div>
+        <div class="stat"><div class="stat-value" id="totalRegular">–</div><div class="stat-label">Users</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Users</h2>
+      <p class="muted" style="margin-bottom:.85rem;">Passwords are never exposed.</p>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th></tr>
+        </thead>
+        <tbody id="userTableBody">
+          <tr><td colspan="4" class="dim" style="text-align:center;padding:1.5rem;">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
+    if (!currentUser || currentUser.role !== 'admin') {
+      window.location.href = '/login.html';
+    } else {
+      document.getElementById('adminName').textContent  = currentUser.name;
+      document.getElementById('adminEmail').textContent = currentUser.email;
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.removeItem('currentUser');
+      window.location.href = '/login.html';
+    });
+
+    async function loadUsers() {
+      try {
+        const res  = await fetch('/api/users');
+        const list = await res.json();
+
+        document.getElementById('totalUsers').textContent   = list.length;
+        document.getElementById('totalAdmins').textContent  = list.filter(u => u.role === 'admin').length;
+        document.getElementById('totalStaff').textContent   = list.filter(u => u.role === 'staff').length;
+        document.getElementById('totalRegular').textContent = list.filter(u => u.role === 'user').length;
+
+        const tbody = document.getElementById('userTableBody');
+        if (!list.length) {
+          tbody.innerHTML = '<tr><td colspan="4" class="dim" style="text-align:center;padding:1.5rem;">No users yet.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = list.map(u => 
+          <tr>
+            <td class="dim"></td>
+            <td></td>
+            <td class="dim"></td>
+            <td><span class="badge"></span></td>
+          </tr>
+        ).join('');
+      } catch {
+        document.getElementById('userTableBody').innerHTML =
+          '<tr><td colspan="4" style="color:#991b1b;text-align:center;padding:1.5rem;">Failed to load users.</td></tr>';
+      }
+    }
+
+    if (currentUser && currentUser.role === 'admin') loadUsers();
+  </script>
+</body>
+</html>
