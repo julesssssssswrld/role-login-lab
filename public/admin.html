@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Admin Dashboard" />
+  <meta name="description" content="Admin Dashboard — manage all users." />
   <title>Admin Dashboard</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -14,7 +14,10 @@
         <h1>Dashboard</h1>
         <span class="badge-role admin">Admin</span>
       </div>
-      <button id="logoutBtn" class="btn danger">Sign out</button>
+      <div style="display:flex;gap:.5rem;">
+        <button id="profileBtn" class="btn">My Profile</button>
+        <button id="logoutBtn"  class="btn danger">Sign out</button>
+      </div>
     </header>
 
     <div class="card">
@@ -33,14 +36,14 @@
     </div>
 
     <div class="card">
-      <h2>Users</h2>
+      <h2>Registered Users</h2>
       <p class="muted" style="margin-bottom:.85rem;">Passwords are never exposed.</p>
       <table>
         <thead>
-          <tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th></tr>
+          <tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr>
         </thead>
         <tbody id="userTableBody">
-          <tr><td colspan="4" class="dim" style="text-align:center;padding:1.5rem;">Loading...</td></tr>
+          <tr><td colspan="5" class="dim" style="text-align:center;padding:1.5rem;">Loading...</td></tr>
         </tbody>
       </table>
     </div>
@@ -60,32 +63,93 @@
       window.location.href = '/login.html';
     });
 
+    document.getElementById('profileBtn').addEventListener('click', () => {
+      window.location.href = '/profile.html';
+    });
+
+    let cachedUsers = [];
+
     async function loadUsers() {
       try {
         const res  = await fetch('/api/users');
-        const list = await res.json();
+        cachedUsers = await res.json();
 
-        document.getElementById('totalUsers').textContent   = list.length;
-        document.getElementById('totalAdmins').textContent  = list.filter(u => u.role === 'admin').length;
-        document.getElementById('totalStaff').textContent   = list.filter(u => u.role === 'staff').length;
-        document.getElementById('totalRegular').textContent = list.filter(u => u.role === 'user').length;
+        document.getElementById('totalUsers').textContent   = cachedUsers.length;
+        document.getElementById('totalAdmins').textContent  = cachedUsers.filter(u => u.role === 'admin').length;
+        document.getElementById('totalStaff').textContent   = cachedUsers.filter(u => u.role === 'staff').length;
+        document.getElementById('totalRegular').textContent = cachedUsers.filter(u => u.role === 'user').length;
 
         const tbody = document.getElementById('userTableBody');
-        if (!list.length) {
-          tbody.innerHTML = '<tr><td colspan="4" class="dim" style="text-align:center;padding:1.5rem;">No users yet.</td></tr>';
+        if (!cachedUsers.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="dim" style="text-align:center;padding:1.5rem;">No users yet.</td></tr>';
           return;
         }
-        tbody.innerHTML = list.map(u => 
+        tbody.innerHTML = cachedUsers.map(u => `
           <tr>
-            <td class="dim"></td>
-            <td></td>
-            <td class="dim"></td>
-            <td><span class="badge"></span></td>
+            <td class="dim">${u.id}</td>
+            <td>${u.name}</td>
+            <td class="dim">${u.email}</td>
+            <td><span class="badge">${u.role}</span></td>
+            <td>
+              <button class="btn small" onclick="editUser(${u.id})">Edit</button>
+              <button class="btn small danger" onclick="deleteUser(${u.id})">Delete</button>
+            </td>
           </tr>
-        ).join('');
+        `).join('');
       } catch {
         document.getElementById('userTableBody').innerHTML =
-          '<tr><td colspan="4" style="color:#991b1b;text-align:center;padding:1.5rem;">Failed to load users.</td></tr>';
+          '<tr><td colspan="5" style="color:#991b1b;text-align:center;padding:1.5rem;">Failed to load users.</td></tr>';
+      }
+    }
+
+    async function deleteUser(id) {
+      const user = cachedUsers.find(u => u.id === id);
+      if (user && user.id === currentUser.id) {
+        alert('You cannot delete your own admin account.');
+        return;
+      }
+      if (!confirm(`Delete user #${id}? This cannot be undone.`)) return;
+
+      try {
+        const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+        if (res.status === 204) {
+          loadUsers();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          alert(data.error || 'Failed to delete user.');
+        }
+      } catch {
+        alert('Cannot reach the server.');
+      }
+    }
+
+    async function editUser(id) {
+      const user = cachedUsers.find(u => u.id === id);
+      if (!user) return;
+
+      const newName  = prompt('New name:', user.name);
+      if (newName === null) return;
+
+      const newEmail = prompt('New email:', user.email);
+      if (newEmail === null) return;
+
+      const newRole  = prompt('New role (admin / staff / user):', user.role);
+      if (newRole === null) return;
+
+      try {
+        const res  = await fetch(`/api/users/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName, email: newEmail, role: newRole })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          loadUsers();
+        } else {
+          alert(data.error || 'Failed to update user.');
+        }
+      } catch {
+        alert('Cannot reach the server.');
       }
     }
 

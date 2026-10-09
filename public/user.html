@@ -14,7 +14,10 @@
         <h1>Dashboard</h1>
         <span class="badge-role user">User</span>
       </div>
-      <button id="logoutBtn" class="btn danger">Sign out</button>
+      <div style="display:flex;gap:.5rem;">
+        <button id="profileBtn" class="btn">My Profile</button>
+        <button id="logoutBtn"  class="btn danger">Sign out</button>
+      </div>
     </header>
 
     <div class="card">
@@ -45,6 +48,10 @@
     document.getElementById('logoutBtn').addEventListener('click', () => {
       sessionStorage.removeItem('currentUser');
       window.location.href = '/login.html';
+    });
+
+    document.getElementById('profileBtn').addEventListener('click', () => {
+      window.location.href = '/profile.html';
     });
   </script>
 </body>

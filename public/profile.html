@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Edit your profile information and change your password." />
+  <title>My Profile — Role-Based Lab</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div class="topbar-meta">
+        <h1>My Profile</h1>
+      </div>
+      <button id="backBtn" class="btn danger">&#8592; Back</button>
+    </header>
+
+    <div class="card">
+      <h2>Edit Your Information</h2>
+      <p class="muted" style="margin-bottom:1.25rem;">
+        Leave password fields blank to keep your current password.
+      </p>
+
+      <form id="profileForm" autocomplete="off">
+        <div class="field">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" required />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" required />
+        </div>
+
+        <hr style="margin:1.25rem 0;border:none;border-top:1px solid var(--border);" />
+
+        <div class="field">
+          <label for="currentPassword">Current Password <span style="font-weight:400;text-transform:none;">(only if changing password)</span></label>
+          <input type="password" id="currentPassword" placeholder="Leave blank to keep current" />
+        </div>
+        <div class="field" style="margin-bottom:1.25rem;">
+          <label for="newPassword">New Password</label>
+          <input type="password" id="newPassword" placeholder="At least 6 characters" />
+        </div>
+
+        <button type="submit" id="saveBtn" class="btn primary">Save Changes</button>
+      </form>
+
+      <p id="msg" class="msg"></p>
+    </div>
+  </div>
+
+  <script>
+    const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
+    if (!currentUser) window.location.href = '/login.html';
+
+    const form = document.getElementById('profileForm');
+    const msg  = document.getElementById('msg');
+    const btn  = document.getElementById('saveBtn');
+
+    // Pre-fill form
+    document.getElementById('name').value  = currentUser.name  || '';
+    document.getElementById('email').value = currentUser.email || '';
+
+    // Back button — routes to the correct dashboard
+    document.getElementById('backBtn').addEventListener('click', () => {
+      if (currentUser.role === 'admin')      window.location.href = '/admin.html';
+      else if (currentUser.role === 'staff') window.location.href = '/staff.html';
+      else                                   window.location.href = '/user.html';
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.textContent = '';
+      msg.className = 'msg';
+
+      const name            = document.getElementById('name').value.trim();
+      const email           = document.getElementById('email').value.trim();
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword     = document.getElementById('newPassword').value;
+
+      const body = { name, email };
+      if (newPassword) {
+        body.currentPassword = currentPassword;
+        body.newPassword     = newPassword;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      try {
+        const res  = await fetch(`/api/profile/${currentUser.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          msg.textContent = data.error || 'Update failed.';
+          msg.className = 'msg error';
+          return;
+        }
+
+        // Update session with fresh data
+        sessionStorage.setItem('currentUser', JSON.stringify(data.user));
+        Object.assign(currentUser, data.user);
+
+        msg.textContent = 'Profile updated successfully!';
+        msg.className = 'msg success';
+
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value     = '';
+      } catch {
+        msg.textContent = 'Cannot reach the server. Is it running?';
+        msg.className = 'msg error';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+      }
+    });
+  </script>
+</body>
+</html>

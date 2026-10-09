@@ -141,6 +141,11 @@ input:focus {
 
 .btn.danger:hover { background: var(--danger-bg); }
 
+.btn.small {
+  padding: .32rem .65rem;
+  font-size: .75rem;
+}
+
 /* ---- Messages ---- */
 .msg { font-size: .78rem; margin-top: .65rem; min-height: 1rem; }
 .msg.error   { color: var(--danger); }
